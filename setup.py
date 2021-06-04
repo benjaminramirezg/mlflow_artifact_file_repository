@@ -2,10 +2,9 @@ from setuptools import setup
 import sys
 sys.path.insert(0, './onesaitplatformplugins')
 
-
 setup(
     name="mlflow-onesait-platform-plugin",
-    version="0.1.47",
+    version="0.2.6",
     description="Plugin for MLflow and Onesait Platform",
     packages=['onesaitplatformplugins'],
     install_requires=["mlflow", "onesaitplatform-client-services"],
