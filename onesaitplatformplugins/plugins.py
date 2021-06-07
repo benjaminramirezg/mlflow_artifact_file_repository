@@ -144,6 +144,19 @@ class OnesaitPlatformArtifactRepository(ArtifactRepository):
                 return False
         return True
 
+    def log_artifact(self, local_file, artifact_path=None):
+        """Logs a local file as an artifact in OSP repository"""
+        file_size = os.path.getsize(local_file)
+        remote_file = os.path.basename(local_file)
+        if artifact_path:
+            remote_file = '/'.join([artifact_path, remote_file])
+        uploaded_artifact_id = self.upload_artifact(
+            local_file, os.path.basename(local_file)
+            )
+        parameter_key = ARTIFACTS_PARAM_KEY + str(1)
+        parameter_value = json.dumps([remote_file, uploaded_artifact_id, file_size])
+        mlflow.log_param(parameter_key, parameter_value)
+
     def log_artifacts(self, local_dir, artifact_path=None):
         """Saves artifacts in OSP repository"""
         artifact_counter = 0
