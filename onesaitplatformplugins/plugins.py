@@ -35,7 +35,7 @@ class OnesaitPlatformArtifactRepository(ArtifactRepository):
         """Returns parameters from artifact uri"""
         print(artifact_uri)
         match = re.match(
-            'onesait-platform:[/]{2}([^@]+)@([^/]+)(:?[/]([0-9]+)[/]([^/]+)[/]artifacts(:?[/](.+))?)?',
+            'onesait-platform:[/]{2}([^@]+)@([^/]+)(?:[/]([0-9]+)[/]([^/]+)[/]artifacts(?:[/](.+))?)?',
             artifact_uri
             )
         if not match:
