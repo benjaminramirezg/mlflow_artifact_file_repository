@@ -19,56 +19,36 @@ class OnesaitPlatformArtifactRepository(ArtifactRepository):
         """Initialization of the object, given a config file for OSP deployment"""
         super(OnesaitPlatformArtifactRepository, self).__init__(*args, **kwargs)
 
-        if 'OSP_CONFIG_PATH' not in os.environ:
-            raise AttributeError('OSP_CONFIG_PATH env variable not setted')
-        osp_config_path = os.environ['OSP_CONFIG_PATH']
-        config = None
-        try:
-            config_fh = open(osp_config_path, 'r')
-            config = json.loads(config_fh.read())
-            config_fh.close()
-        except ValueError:
-            raise ValueError(
-        'Unable to parse OSP config file {}'.format(
-            osp_config_path
-            ))
-        except FileNotFoundError:
-            raise  FileNotFoundError(
-        'Unable to open OSP config file {}'.format(
-            osp_config_path
-            ))
+        config = self.parse_artifact_uri(
+            self.artifact_uri
+        )
 
-        if not (isinstance(config, dict) and 'token' in config):
-            raise AttributeError(
-        'Attribute token not found in {}'.format(
-            osp_config_path
-            ))
-        if not (isinstance(config, dict) and 'host' in config):
-            raise AttributeError(
-        'Attribute host not found in {}'.format(
-            osp_config_path
-            ))
+        if config['host'] is None or config['token'] is None:
+            raise ValueError('No host or token provided in artifact uri {}'.format(self.artifact_uri))
 
         self.osp_file_manager = FileManager(
-            host=config['host'], user_token="Bearer {}".format(config['token'])
+            host=config['host'], user_token=config['token']
             )
         self.osp_file_manager.protocol = "https"
 
     def parse_artifact_uri(self, artifact_uri):
         """Returns parameters from artifact uri"""
+        print(artifact_uri)
         match = re.match(
-            'onesait-platform:[/]{2}([^/]+)[/]([0-9]+)[/]([^/]+)[/]artifacts(:?[/](.+))?',
+            'onesait-platform:[/]{2}([^@]+)@([^/]+)(:?[/]([0-9]+)[/]([^/]+)[/]artifacts(:?[/](.+))?)?',
             artifact_uri
             )
         if not match:
             raise ValueError('Unable to parse artifact uri {}'.format(artifact_uri))
 
-        host = match.group(1)
-        experiment_id = match.group(2)
-        run_id = match.group(3)
-        path = match.group(4)
+        token = match.group(1)
+        host = match.group(2)
+        experiment_id = match.group(3)
+        run_id = match.group(4)
+        path = match.group(5)
 
         return {
+            'token': token,
             'host': host,
             'experiment_id': experiment_id,
             'run_id': run_id,
@@ -80,6 +60,10 @@ class OnesaitPlatformArtifactRepository(ArtifactRepository):
         info = self.parse_artifact_uri(artifact_uri)
         run_id = info['run_id']
         experiment_id = info['experiment_id']
+
+        if run_id is None or experiment_id is None:
+            raise ValueError('No run or experiment provided in artifact uri {}'.format(artifact_uri))
+
         runs_in_experiment = mlflow.search_runs([experiment_id])
         run = runs_in_experiment[runs_in_experiment['run_id'] == run_id]
 
